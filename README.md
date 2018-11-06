@@ -12,28 +12,6 @@ npm install
 npm start
 ```
 
-## API Endpoints
-
-#### Customer Routes
-
-- GET /customers
-- GET /customers/:id
-- POST (Protected) /customers
-- PUT (Protected) /customers/:id
-- DELETE (Protected) /customers/:id
-
-#### User Routes
-
-- POST /register
-- POST /auth
-
-## App Info
-
-### Author
-
-Brad Traversy
-[Traversy Media](http://www.traversymedia.com)
-
 ### Version
 
 1.0.0
