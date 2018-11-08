@@ -35,7 +35,7 @@ module.exports = server => {
         // Save User
         try {
           const newUser = await user.save();
-          res.send(201);
+          res.send(200);
           next();
         } catch (err) {
           console.log('save error:',err)
@@ -88,15 +88,41 @@ module.exports = server => {
     if(!(id)){
         return next(new errors.MissingParameterError('id field is required'));
     }
-
+    const { email, password, fullname, role, phone } = req.body;
+    
     const update = async () => {
       try {
-        const user = await User.findOneAndUpdate(
+        let _password = password;
+        const save = async (heshedPass) => {
+          return  await User.findOneAndUpdate(
             { _id: id },
-            req.body
-        );
-        res.send(200);
-        next();
+            {
+              email,
+              heshedPass,
+              fullname,
+              role,
+              phone
+            },
+            { new: true } 
+          );
+        }
+        
+        if(_password){
+          bcrypt.genSalt(10, (err, salt) => {
+            bcrypt.hash(user.password, salt, async (err, hash) => {
+              // Hash Password
+              _password = hash;
+              // Save Use
+              const user = await save(_password);
+              res.send(user);
+              next();
+            });
+          });
+        }else{
+          const user = await save();
+          res.send(user);
+          next();
+        }
       } catch (err) {
         return next(
           new errors.ResourceNotFoundError(
@@ -107,7 +133,7 @@ module.exports = server => {
     }
 
     if(req.role==config.ROLE_ADMIN){
-        if(typeof req.body.email != undefined || typeof req.body.password != undefined){
+        if(typeof email === undefined && typeof password === undefined){
           await update();
         }else{
           return next(new errors.ForbiddenError(strings.NO_API_ACCESS + '. Email, password fields must be not written'));
@@ -115,8 +141,7 @@ module.exports = server => {
     }else{
         await update();
     }
-
-
+    next();
   });
 
   // Delete User
@@ -167,7 +192,25 @@ module.exports = server => {
         new errors.ResourceNotFoundError(err.message)
       );
     }
-    
+
+  });
+
+  // Get users
+  server.get('/get-users', async (req, res, next) => {
+
+    if(req.role==config.ROLE_ADMIN){
+      try {
+        const users = await User.find();
+        res.send(users.toJSON());
+        next();
+      } catch (err) {
+        return next(
+          new errors.ResourceNotFoundError(err.message)
+        );
+      }
+    }else{
+      return next(new errors.ForbiddenError(strings.NO_API_ACCESS));
+    }
 
   });
 

@@ -4,29 +4,36 @@ const timestamp = require('mongoose-timestamp');
 const BookSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true
+    required: true,
+    maxlength: 100
   },
   author: {
     type: String,
-    required: true
+    required: true,
+    maxlength: 100
   },
   pagesNumber: {
     type: Number,
-    required: true
+    required: true,
+    default: 0
   },
   category: {
     type: Number,
-    required: true
+    required: true,
+    default: 0
   },
   description: {
-    type: String
+    type: String,
+    maxlength: 1000
   },
   price: {
     type: Number,
+    min: 0,
     default: 0
   },
   count:{
     type: Number,
+    min: 0,
     default:1
   }
 });

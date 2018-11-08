@@ -5,14 +5,16 @@ const config = require('../config');
 const OrderSchema = new mongoose.Schema({
   orderNumber: {
     type: Number,
-    required: true
+    required: true,
+    min: 0
   },
   userId: {
     type: String,
     required: true
   },
   description: {
-    type: String
+    type: String,
+    maxlength: 500
   },
   status: {
     type: Number,
@@ -20,11 +22,24 @@ const OrderSchema = new mongoose.Schema({
   },
   summary: {
     type: Number,
-    default: 0
+    default: 0,
+    min: 0
   },
   statusDescription: {
-    type: String
-  }
+    type: String,
+    maxlength: 500
+  },
+  orderedBooks: [{
+    bookId: {
+      type: String,
+      required: true
+    },
+    count: {
+      type: Number,
+      default: 0,
+      min: 0
+    }
+  }]
 });
 
 OrderSchema.plugin(timestamp);

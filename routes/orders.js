@@ -2,12 +2,9 @@ const errors = require('restify-errors');
 const jwt = require('jsonwebtoken');
 const Book = require('../models/Book');
 const Order = require('../models/Order');
-const OrderBooks = require('../models/OrderBooks');
 const User = require('../models/User');
 const config = require('../config');
 const strings = require('../strings');
-const rjwt = require('restify-jwt-community');
-const tokenService = require('../services/tokenService');
 const booksManagement = require('../services/booksManagment');
 const middleware = require('../middleware');
 
@@ -26,27 +23,20 @@ module.exports = server => {
         orderNumber: orderNumber,
         userId: req.jwtDecoded._id,
         description: description,
-        status: config.ORDER_STATUS_NEW
+        status: config.ORDER_STATUS_NEW,
+        orderedBooks: orderedBooks
     });
 
     try {
-        const newOrder = await order.save();
-        const orderId = newOrder._id;
         let summary = 0;
-
         for(let i=0; i<orderedBooks.length; i++){
             const book = await Book.findById(orderedBooks[i].bookId);
             const summarySameBooks = orderedBooks[i].count * book.price;
             summary+=summarySameBooks;
-            const orderedBook = new OrderBooks({
-                orderId: orderId,
-                bookId: orderedBooks[i].bookId,
-                count: orderedBooks[i].count
-            });
-            const newOrderedBook = await orderedBook.save();
         }
-        await Order.findOneAndUpdate({_id: orderId},{summary});
-        res.send(200);
+        order.summary = summary;
+        const newOrder = await order.save();
+        res.send(newOrder);
         next();
     } catch (err) {
         return next(new errors.InternalError(err.message));
@@ -57,7 +47,7 @@ module.exports = server => {
   //get orders  
   server.get('/get-orders', async (req, res, next) => {
 
-    const getOrders = async (userId) =>{
+    const getOrders = async (userId) => {
         try {
             let orders;
             if(userId){
@@ -65,49 +55,9 @@ module.exports = server => {
                     userId
                 });  
             }else{
-                orders = await Order.find();
+                orders = await Order.find({});
             }
-           
-            const getReceivedBooks = async (id) => {
-                const getOrderedBooksArr = async (orderId) => {
-                    const books = [];
-                    const orderedBooks = await OrderBooks.find({ orderId });
-                    for(let i=0; i< orderedBooks.length;i++){
-                        books.push(orderedBooks[i].toJSON());
-                    }
-                    //console.log('orderedBooks',books);
-                    return books;
-                };
-                const getBookObj = async(_id) => {
-                    const book = await Book.findById(_id);
-                    const bookObj = book.toJSON();
-                    return bookObj;
-                };
-                const orderedBooksArr = await getOrderedBooksArr(id);
-                const orderedBooksPromises =  orderedBooksArr.map( async (orderedBook)=>{
-                    let bookObj = await getBookObj(orderedBook.bookId);
-                    const newBook = {};
-
-                    newBook.orderedBook = orderedBook;
-                    newBook.bookInfo = bookObj;
-
-                    return newBook;
-                });
-                const books = await Promise.all(orderedBooksPromises);
-                //console.log('books',books);
-                return books;
-            };
-            const ordersPromises = orders.map( async (order)=>{
-                const receivedBooks = await getReceivedBooks(order._id);
-                const newOrder = {};
-                newOrder.orderDetails = order;
-                newOrder.receivedBooks = receivedBooks;
-                console.log('order',newOrder);
-                return newOrder;
-            });
-            orders = await Promise.all(ordersPromises);
             return orders;
-
         } catch (err) {
             return next(new errors.InternalError(err.message));
         }
@@ -116,21 +66,18 @@ module.exports = server => {
     let orders;
     if(req.role==config.ROLE_ADMIN){
         orders = await getOrders();
-        res.send(orders);
-        next();
     }else{
         orders = await getOrders(req.jwtDecoded._id);
-        res.send(orders);
-        next();
     }
-    
+    res.send(orders);
+    next();
   });
 
   //confirn/reject order 
   server.post('/confirm-reject-order', async (req, res, next) => {
     middleware.checkForJSON(req, res, next);
 
-    let { confirm, id, statusDescription } = req.body;
+    let { confirm, id, statusDescription, summary } = req.body;
     let NEW_STATUS = confirm? config.ORDER_STATUS_SUCCESS: config.ORDER_STATUS_REJECTED;
 
     if(!(confirm && id)){
@@ -153,14 +100,15 @@ module.exports = server => {
                 console.log('confirmed',confirmed);
                 console.log('erorrMessage',erorrMessage);
                 console.log('decremented',decremented);
+                const updated = await Order.findOneAndUpdate( {_id:id}, {
+                    status: NEW_STATUS,
+                    statusDescription,
+                    summary
+                });
+                console.log('Updated order',updated);
+                res.send({statusDescription,status:NEW_STATUS});
+                next();
             }
-            const updated = await Order.findOneAndUpdate( {_id:id}, {
-                status: NEW_STATUS,
-                statusDescription: statusDescription
-            });
-            console.log('Updated order',updated);
-            res.send({statusDescription,status:NEW_STATUS});
-            next();
         }else{
             return next(new errors.ForbiddenError(strings.NO_API_ACCESS));
         }
@@ -192,10 +140,7 @@ module.exports = server => {
             const order = await Order.findOneAndRemove({
               _id: id
             });
-            const orderBooks = await OrderBooks.deleteMany({
-                orderId: id
-            });
-            res.send(204);
+            res.send(200);
             next();
         } catch (err) {
             return next(

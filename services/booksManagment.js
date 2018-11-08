@@ -6,9 +6,10 @@ const strings = require('../strings');
 
 exports.decrementBooksByOrderId = async (req,res,next,id) => {
   let confirmed = false, error = false, erorrMessage = strings.NO_COUNT_OF_BOOKS, decremented = false;
-  const orderBooks = await OrderBooks.find({
-    orderId: id
+  const order = await Order.find({
+    _id: id
   });
+  let orderBooks = order.orderedBooks;
   if(orderBooks.length){
     for (let i = 0; i < orderBooks.length; i++) {
       const book = await Book.findById(orderBooks[i].bookId);
@@ -29,8 +30,8 @@ exports.decrementBooksByOrderId = async (req,res,next,id) => {
         const updated = await Book.findOneAndUpdate({_id:book._id},{
           count: countInLibrary - countInOrder
         });
-        decremented = true;
       }
+      decremented = true;
     }
   }
   return { confirmed, erorrMessage, decremented };

@@ -62,7 +62,7 @@ module.exports = server => {
             const book = await Book.findOneAndRemove({
               _id: id
             });
-            res.send(204);
+            res.send(200);
             next();
         } catch (err) {
             return next(
@@ -138,13 +138,24 @@ module.exports = server => {
     if(!(id)){
         return next(new errors.MissingParameterError('id field is required'));
     }
+    const { name, author, pagesNumber, category, description, price, count } = req.body;
+
     if(req.role==config.ROLE_ADMIN){
         try {
             const book = await Book.findOneAndUpdate(
                 { _id: id },
-                req.body
+                {
+                    name,
+                    author,
+                    pagesNumber,
+                    category,
+                    description,
+                    price, 
+                    count
+                },
+                { new: true }
             );
-            res.send(200);
+            res.send(book);
             next();
         } catch (err) {
             return next(

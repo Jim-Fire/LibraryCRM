@@ -5,22 +5,27 @@ const UserSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+    maxlength: 100
   },
   password: {
     type: String,
-    required: true
+    required: true,
+    maxlength: 100
   },
   fullname: {
     type: String,
-    required: true
+    required: true,
+    maxlength: 100
   },
   role: {
     type: Number, // 1 - user, 2 - admin
-    default: 1
+    default: 1,
+    min: 0
   },
   phone: {
-    type: String
+    type: String,
+    maxlength: 50
   }
 });
 
