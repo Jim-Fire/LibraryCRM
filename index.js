@@ -8,10 +8,12 @@ const books = require('./routes/books');
 const orders = require('./routes/orders');
 const errors = require('restify-errors');
 const User = require('./models/User');
+const cors = require('cors')
 
 const server = restify.createServer();
 
 // Middleware
+server.use(cors());
 server.use(restify.plugins.bodyParser());
 
 // Protect Routes

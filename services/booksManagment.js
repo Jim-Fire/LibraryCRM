@@ -1,6 +1,5 @@
 const Book = require('../models/Book');
 const Order = require('../models/Order');
-const OrderBooks = require('../models/OrderBooks');
 const errors = require('restify-errors');
 const strings = require('../strings');
 

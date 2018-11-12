@@ -36,7 +36,10 @@ module.exports = server => {
         }
         order.summary = summary;
         const newOrder = await order.save();
-        res.send(newOrder);
+        res.send({
+            order: newOrder.toJSON(),
+            message: strings.ORDER_CREATE_SUCCESS
+        });
         next();
     } catch (err) {
         return next(new errors.InternalError(err.message));
@@ -69,7 +72,9 @@ module.exports = server => {
     }else{
         orders = await getOrders(req.jwtDecoded._id);
     }
-    res.send(orders);
+    res.send({
+        orders
+    });
     next();
   });
 
@@ -105,8 +110,11 @@ module.exports = server => {
                     statusDescription,
                     summary
                 });
-                console.log('Updated order',updated);
-                res.send({statusDescription,status:NEW_STATUS});
+                console.log('Confirmed/rejected order',updated);
+                res.send({
+                    order: updated.toJSON(),
+                    message: strings.ORDER_CONFIRM_SUCCESS
+                });
                 next();
             }
         }else{
@@ -140,7 +148,10 @@ module.exports = server => {
             const order = await Order.findOneAndRemove({
               _id: id
             });
-            res.send(200);
+            res.send({
+                order,
+                message: strings.ORDER_DELETE_SUCCESS
+            });
             next();
         } catch (err) {
             return next(

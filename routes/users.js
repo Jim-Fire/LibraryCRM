@@ -35,7 +35,10 @@ module.exports = server => {
         // Save User
         try {
           const newUser = await user.save();
-          res.send(200);
+          res.send({
+            message: strings.SIGN_UP_SUCCESS,
+            user: newUser.toJSON()
+          });
           next();
         } catch (err) {
           console.log('save error:',err)
@@ -64,7 +67,10 @@ module.exports = server => {
       //const { iat, exp } = jwt.decode(token);
       //console.log('decode token',jwt.decode(token));
       // Respond with token
-      res.send({ token });
+      res.send({ 
+        token ,
+        message: strings.SIGN_IN_SUCCESS
+      });
 
       next();
     } catch (err) {
@@ -120,7 +126,10 @@ module.exports = server => {
           });
         }else{
           const user = await save();
-          res.send(user);
+          res.send({
+            user,
+            message: strings.USER_UPDATE_SUCCESS
+          });
           next();
         }
       } catch (err) {
@@ -164,7 +173,10 @@ module.exports = server => {
     if(req.role==config.ROLE_ADMIN){
       try {
         const user = await User.findOneAndRemove({ _id: id });
-        res.send(200);
+        res.send({
+          user,
+          message: strings.USER_DELETE_SUCCESS
+        });
         next();
       } catch (err) {
         return next(
@@ -185,7 +197,9 @@ module.exports = server => {
 
     try {
       const user = await User.findOne({ _id });
-      res.send(user.toJSON());
+      res.send({ 
+        user: user.toJSON() 
+      });
       next();
     } catch (err) {
       return next(
@@ -201,7 +215,9 @@ module.exports = server => {
     if(req.role==config.ROLE_ADMIN){
       try {
         const users = await User.find();
-        res.send(users.toJSON());
+        res.send({
+          users: users.toJSON()
+        });
         next();
       } catch (err) {
         return next(

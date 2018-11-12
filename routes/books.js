@@ -31,7 +31,10 @@ module.exports = server => {
 
         try {
             const newBook = await book.save();
-            res.send(newBook.toJSON());
+            res.send({
+                book: newBook.toJSON(),
+                message: strings.BOOK_ADD_SUCCESS
+            });
             next();
         } catch (err) {
             return next(new errors.InternalError(err.message));
@@ -62,7 +65,10 @@ module.exports = server => {
             const book = await Book.findOneAndRemove({
               _id: id
             });
-            res.send(200);
+            res.send({
+                book,
+                message: strings.BOOK_DELETE_SUCCESS
+            });
             next();
         } catch (err) {
             return next(
@@ -81,7 +87,9 @@ module.exports = server => {
    
     try {
         const books = await Book.find();
-        res.send(books);
+        res.send({
+            books
+        });
         next();
     } catch (err) {
         return next(
@@ -155,7 +163,10 @@ module.exports = server => {
                 },
                 { new: true }
             );
-            res.send(book);
+            res.send({
+                book,
+                message: strings.BOOK_UPDATE_SUCCESS
+            });
             next();
         } catch (err) {
             return next(
