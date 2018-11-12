@@ -68,7 +68,8 @@ module.exports = server => {
       //console.log('decode token',jwt.decode(token));
       // Respond with token
       res.send({ 
-        token ,
+        token,
+        user,
         message: strings.SIGN_IN_SUCCESS
       });
 
