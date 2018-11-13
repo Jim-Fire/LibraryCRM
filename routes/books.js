@@ -47,7 +47,7 @@ module.exports = server => {
   //delete book  
   server.del('/delete-book/:id', async (req, res, next) => {
 
-    middleware.checkForJSON(req, res, next);
+    //middleware.checkForJSON(req, res, next);
 
     let id; 
     if(req.body){

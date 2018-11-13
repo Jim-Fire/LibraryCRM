@@ -12,4 +12,5 @@ module.exports = {
     ORDER_CREATE_SUCCESS:'Order successfully created! Waiting for confirm ...',
     ORDER_CONFIRM_SUCCESS:'Order successfully confirmed! Waiting for phone call for details ...',
     ORDER_DELETE_SUCCESS:'Order successfully deleted!',
+    ORDER_REJECTED:'Order successfully rejected!',
 };

@@ -52,6 +52,26 @@ module.exports = server => {
 
     const getOrders = async (userId) => {
         try {
+            const appendBooks = async (orders)=>{
+                const newOrdersPromises = orders.map( async (order)=>{
+                    order = order.toObject();
+                    let newOrderedBooksPromises = order.orderedBooks.map( async (book)=>{
+                        let bookDetails = await Book.findById(book.bookId);
+                        return {
+                            ...book, 
+                            bookDetails: bookDetails.toObject() 
+                        }
+                    });
+                    const newOrderedBooks  = await Promise.all(newOrderedBooksPromises);
+                    //console.log('newOrderedBooks',newOrderedBooks)
+                    return {
+                        ...order,
+                        orderedBooks: newOrderedBooks
+                    }
+                });
+                const  newOrders  = await Promise.all(newOrdersPromises);
+                return newOrders;
+            };
             let orders;
             if(userId){
                 orders = await Order.find({
@@ -60,6 +80,7 @@ module.exports = server => {
             }else{
                 orders = await Order.find({});
             }
+            orders = await appendBooks(orders);
             return orders;
         } catch (err) {
             return next(new errors.InternalError(err.message));
@@ -72,6 +93,7 @@ module.exports = server => {
     }else{
         orders = await getOrders(req.jwtDecoded._id);
     }
+    //console.log('Resp orders',orders)
     res.send({
         orders
     });
@@ -85,7 +107,7 @@ module.exports = server => {
     let { confirm, id, statusDescription, summary } = req.body;
     let NEW_STATUS = confirm? config.ORDER_STATUS_SUCCESS: config.ORDER_STATUS_REJECTED;
 
-    if(!(confirm && id)){
+    if(!(typeof confirm !==undefined && typeof id !==undefined)){
         return next(new errors.MissingParameterError('confirm, id fields is required'));
     }
 
@@ -93,27 +115,39 @@ module.exports = server => {
     if(order.status === config.ORDER_STATUS_SUCCESS){
         return next(new errors.ForbiddenError(strings.ORDER_ALREADY_COMPLETED));
     }
-
     try {
         if(req.role==config.ROLE_ADMIN){
             if(confirm){
                 const { confirmed, erorrMessage, decremented } = await booksManagement.decrementBooksByOrderId(req, res, next, id);
+                let message = strings.ORDER_CONFIRM_SUCCESS;
                 if(!confirmed){
                     NEW_STATUS = config.ORDER_STATUS_REJECTED;
                     statusDescription = erorrMessage;
+                    message = strings.ORDER_REJECTED;
                 }
                 console.log('confirmed',confirmed);
                 console.log('erorrMessage',erorrMessage);
                 console.log('decremented',decremented);
                 const updated = await Order.findOneAndUpdate( {_id:id}, {
                     status: NEW_STATUS,
-                    statusDescription,
-                    summary
-                });
+                    statusDescription
+                },{new:true});
                 console.log('Confirmed/rejected order',updated);
                 res.send({
-                    order: updated.toJSON(),
-                    message: strings.ORDER_CONFIRM_SUCCESS
+                    order: updated,
+                    message,
+                });
+                next();
+            }else{
+                NEW_STATUS = config.ORDER_STATUS_REJECTED;
+                const updated = await Order.findOneAndUpdate( {_id:id}, {
+                    status: NEW_STATUS,
+                    statusDescription
+                },{new:true});
+                console.log('Confirmed/rejected order',updated);
+                res.send({
+                    order: updated,
+                    message: strings.ORDER_REJECTED
                 });
                 next();
             }
@@ -130,7 +164,7 @@ module.exports = server => {
   //delete order
   server.del('/delete-order/:id', async (req, res, next) => {
     
-    middleware.checkForJSON(req, res, next);
+    //middleware.checkForJSON(req, res, next);
 
     let id; 
     if(req.body){
