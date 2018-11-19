@@ -16,6 +16,10 @@ npm start
 
 1.0.0
 
+### Demo server
+
+https://librarycrm.herokuapp.com
+
 ### License
 
 This project is licensed under the MIT License
