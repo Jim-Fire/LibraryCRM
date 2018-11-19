@@ -31,9 +31,9 @@ server.get('/static/media/*', restify.plugins.serveStatic({
 }));
 
 // Protect Routes
-//server.use(rjwt({ secret: config.JWT_SECRET }).unless({ 
-//  path: ['/auth','/register','/'] 
-//}));
+server.use(rjwt({ secret: config.JWT_SECRET }).unless({ 
+  path: ['/auth','/register','/'] 
+}));
 server.use((req,res,next)=>{
   //console.log('__dirname:',__dirname);
   const token = tokenService.getToken(req);
