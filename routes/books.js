@@ -146,23 +146,17 @@ module.exports = server => {
     if(!(id)){
         return next(new errors.MissingParameterError('id field is required'));
     }
-    const { name, author, pagesNumber, category, description, price, count } = req.body;
 
     if(req.role==config.ROLE_ADMIN){
         try {
-            const book = await Book.findOneAndUpdate(
+            await Book.updateOne(
                 { _id: id },
                 {
-                    name,
-                    author,
-                    pagesNumber,
-                    category,
-                    description,
-                    price, 
-                    count
+                    ...req.body
                 },
                 { new: true }
             );
+            const book = await Book.findById(id);
             res.send({
                 book,
                 message: strings.BOOK_UPDATE_SUCCESS

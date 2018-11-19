@@ -95,24 +95,21 @@ module.exports = server => {
     if(!(id)){
         return next(new errors.MissingParameterError('id field is required'));
     }
-    const { email, password, fullname, role, phone } = req.body;
+    const { email, password } = req.body;
     
     const update = async () => {
       try {
         let _password = password;
         const save = async (heshedPass) => {
-          return  await User.findOneAndUpdate(
+          await User.updateOne(
             { _id: id },
             {
-              email,
-              heshedPass,
-              fullname,
-              role,
-              phone
+              ...req.body
             },
             { new: true } 
           );
-        }
+          return  await User.findById(id)
+        };
         
         if(_password){
           bcrypt.genSalt(10, (err, salt) => {

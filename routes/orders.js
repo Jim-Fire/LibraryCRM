@@ -128,10 +128,11 @@ module.exports = server => {
                 console.log('confirmed',confirmed);
                 console.log('erorrMessage',erorrMessage);
                 console.log('decremented',decremented);
-                const updated = await Order.findOneAndUpdate( {_id:id}, {
+                await Order.updateOne( {_id:id}, {
                     status: NEW_STATUS,
                     statusDescription
                 },{new:true});
+                const updated = await Order.findById(id);
                 console.log('Confirmed/rejected order',updated);
                 res.send({
                     order: updated,
@@ -140,10 +141,11 @@ module.exports = server => {
                 next();
             }else{
                 NEW_STATUS = config.ORDER_STATUS_REJECTED;
-                const updated = await Order.findOneAndUpdate( {_id:id}, {
+                await Order.updateOne( {_id:id}, {
                     status: NEW_STATUS,
                     statusDescription
                 },{new:true});
+                const updated = await Order.findById(id);
                 console.log('Confirmed/rejected order',updated);
                 res.send({
                     order: updated,
